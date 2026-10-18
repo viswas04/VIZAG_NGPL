@@ -5,7 +5,7 @@ import type {
   TeamFormData,
   RegistrationReceipt,
 } from '../types/registration'
-import { callBackend, newRequestId } from './apiClient'
+import { callBackend, getLatestPaymentConfig, newRequestId } from './apiClient'
 import { UpiService } from './upiService'
 
 type ReceiptResponse = { registration: RegistrationReceipt }
@@ -190,6 +190,23 @@ export class RegistrationService {
         ok: false,
         code: 'AMOUNT_MISMATCH',
         error: 'Payment amount from the server does not match the published fee. Please contact the organizers before paying.',
+      }
+    }
+    // Reconcile receipt payment with latest authoritative backend payment configuration
+    const latestConfig = getLatestPaymentConfig()
+    const targetUpiId =
+      latestConfig?.upiId ||
+      (reg.payment.upiId && !TOURNAMENT_CONFIG.payment.staleUpiIds.includes(reg.payment.upiId)
+        ? reg.payment.upiId
+        : TOURNAMENT_CONFIG.payment.upiId)
+
+    if (reg.payment) {
+      reg.payment = {
+        ...reg.payment,
+        upiId: targetUpiId,
+        payeeName: latestConfig?.payeeName || reg.payment.payeeName || TOURNAMENT_CONFIG.payment.payeeName,
+        tournamentName: latestConfig?.tournamentName || reg.payment.tournamentName || TOURNAMENT_CONFIG.payment.tournamentName,
+        currency: latestConfig?.currency || reg.payment.currency || TOURNAMENT_CONFIG.payment.currency,
       }
     }
     return { ok: true, data: reg }

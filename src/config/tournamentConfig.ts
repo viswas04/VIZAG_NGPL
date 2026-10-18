@@ -67,6 +67,16 @@ export const TOURNAMENT_CONFIG = {
     url: 'https://wa.me/919618896939?text=Hello%20NGPL%20Team,%20I%20want%20to%20know%20more%20about%20the%20Season%201%20Cricket%20Tournament%20in%20Visakhapatnam.',
   },
 
+  // Central Payment Defaults (authoritative values are served dynamically by the Apps Script backend)
+  payment: {
+    upiId: '7989318524-2@ybl',
+    payeeName: 'NGPL Cricket Tournament',
+    tournamentName: 'NGPL Tennis Ball Cricket Tournament - Season 1',
+    currency: 'INR',
+    /** Known stale/legacy UPI IDs from previous deployments/cache that must never be displayed */
+    staleUpiIds: ['79893318524@ybl'],
+  },
+
   // Registration Fees (in INR)
   fees: {
     player: {

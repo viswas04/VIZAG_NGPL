@@ -92,7 +92,7 @@ The UPI ID and fees are defined **only** at the top of `Code.gs`:
 
 ```js
 var PAYMENT_CONFIG = {
-  UPI_ID: '79893318524@ybl',
+  UPI_ID: '7989318524-2@ybl',
   ...
   FEES: { Individual: 149, Team: 12000 },
 }
@@ -104,7 +104,7 @@ UPI links and the **UPI Receiver** column always match. To change it later: edit
 
 > [!WARNING]
 > Before going live, scan the generated QR with a UPI app and confirm the **receiver
-> name shown by the app** is the tournament organizer. `79893318524@ybl` has 11 digits
+> name shown by the app** is the tournament organizer. `7989318524-2@ybl` has 11 digits
 > (Indian mobile-based UPI IDs normally have 10). If the app can't resolve it, correct `UPI_ID`.
 
 ## 4. Authorize and create the tabs
@@ -114,7 +114,7 @@ UPI links and the **UPI Receiver** column always match. To change it later: edit
    **Allow**. Requested scopes: Google Sheets (this spreadsheet) and the sheet menu UI.
 3. Return to the sheet: the five tabs exist with header rows (existing tabs/data untouched).
 4. Run **`selfTest`**. The execution log should show
-   `OK — spreadsheet reachable, tabs and headers present. UPI receiver: 79893318524@ybl`.
+   `OK — spreadsheet reachable, tabs and headers present. UPI receiver: 7989318524-2@ybl`.
 5. Reload the sheet. A **NGPL Admin** menu appears.
 
 ## 5. Deploy the web app
@@ -127,7 +127,7 @@ UPI links and the **UPI Receiver** column always match. To change it later: edit
    Version: New version → Deploy**. The URL stays the same.
 
 Check that it's live: open `<WEB_APP_URL>?action=health` in a browser. You should see
-`{"ok":true,"service":"ngpl-registration-backend","ready":true,"problems":[],…,"upiId":"79893318524@ybl",…,"capacity":{"maxConfirmedTeams":25,…}}`.
+`{"ok":true,"service":"ngpl-registration-backend","ready":true,"problems":[],…,"upiId":"7989318524-2@ybl",…,"capacity":{"maxConfirmedTeams":25,…}}`.
 If `ready` is `false`, `problems` says exactly what to fix.
 
 ### Alternative: deploy from this repo with clasp (CLI)
@@ -167,7 +167,7 @@ unavailable" and refuses submissions. Nothing is stored in the browser.
 > live spreadsheet. Do all of the following:
 
 1. `npm run dev`, then open the site and submit an **individual** registration with your own number.
-   Expected: the payment screen shows **₹149**, **79893318524@ybl** and a registration ID.
+   Expected: the payment screen shows **₹149**, **7989318524-2@ybl** and a registration ID.
    Check **Individual Registrations** has the row with *Payment Status = Awaiting Payment*.
 2. Submit a **team** registration. Expected: **₹12,000** and a new row in **Team Registrations**
    with the full roster.
@@ -189,7 +189,7 @@ unavailable" and refuses submissions. Nothing is stored in the browser.
 
 Submitting a UTR **never** marks a payment as paid. Every payment stays **Pending
 Verification** until an organizer checks it against the **actual UPI/bank statement**
-for `79893318524@ybl` (UTR, exact amount, date).
+for `7989318524-2@ybl` (UTR, exact amount, date).
 
 Two admin-only methods:
 

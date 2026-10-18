@@ -15,10 +15,10 @@ import {
   Info,
 } from 'lucide-react'
 import { TOURNAMENT_CONFIG } from '../../config/tournamentConfig'
-import type { RegistrationReceipt } from '../../types/registration'
+import type { BackendPaymentConfig, PaymentInstructions, RegistrationReceipt } from '../../types/registration'
 import { UpiService } from '../../services/upiService'
 import { RegistrationService } from '../../services/registrationService'
-import { newRequestId } from '../../services/apiClient'
+import { getLatestPaymentConfig, newRequestId } from '../../services/apiClient'
 
 type CopyKey = 'upi' | 'amount' | 'ref'
 
@@ -60,6 +60,8 @@ interface PaymentModalProps {
   receipt: RegistrationReceipt | null
   /** Registered mobile number (needed by the server to accept a UTR for this registration) */
   mobile: string
+  /** Authoritative backend payment config from health endpoint / backend */
+  paymentConfig?: BackendPaymentConfig | null
   onClose: () => void
   onPaymentSubmitted: (receipt: RegistrationReceipt) => void
 }
@@ -68,6 +70,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   isOpen,
   receipt,
   mobile,
+  paymentConfig,
   onClose,
   onPaymentSubmitted,
 }) => {
@@ -80,23 +83,41 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   // Stable per payment attempt; the parent remounts this modal (via `key`) for a new receipt.
   const [requestId] = useState(() => newRequestId())
 
+  // Ensure displayed UPI ID, QR code, and "Pay" button all use the same latest backend configuration
+  const latestConfig = paymentConfig || getLatestPaymentConfig()
+  const targetUpiId =
+    latestConfig?.upiId ||
+    (receipt?.payment.upiId && !TOURNAMENT_CONFIG.payment.staleUpiIds.includes(receipt.payment.upiId)
+      ? receipt.payment.upiId
+      : TOURNAMENT_CONFIG.payment.upiId)
+
+  const payment: PaymentInstructions = receipt
+    ? {
+        ...receipt.payment,
+        upiId: targetUpiId,
+        payeeName: latestConfig?.payeeName || receipt.payment.payeeName || TOURNAMENT_CONFIG.payment.payeeName,
+        tournamentName: latestConfig?.tournamentName || receipt.payment.tournamentName || TOURNAMENT_CONFIG.payment.tournamentName,
+        currency: latestConfig?.currency || receipt.payment.currency || TOURNAMENT_CONFIG.payment.currency,
+      }
+    : ({} as PaymentInstructions)
+
+  const paymentUri = receipt ? UpiService.buildPaymentUri(payment) : ''
+
   useEffect(() => {
     let cancelled = false
-    if (receipt) {
-      UpiService.generateQrCodeDataUrl(UpiService.buildPaymentUri(receipt.payment)).then((url) => {
+    if (paymentUri) {
+      UpiService.generateQrCodeDataUrl(paymentUri).then((url) => {
         if (!cancelled) setQrCodeDataUrl(url)
       })
     }
     return () => {
       cancelled = true
     }
-  }, [receipt])
+  }, [paymentUri])
 
   if (!isOpen || !receipt) return null
 
-  const { payment } = receipt
   const isPlayer = receipt.type === 'Individual'
-  const paymentUri = UpiService.buildPaymentUri(payment)
   const wasRejected = receipt.paymentStatus === 'Rejected'
 
   const copy = (value: string, key: CopyKey) => {
@@ -110,7 +131,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (isSubmitting) return
     const check = UpiService.validateUtr(utrNumber)
     if (!check.isValid) {
-      setUtrError(check.error || 'Enter the 12-digit UTR')
+      setUtrError(check.error || 'Enter the UTR / UPI Ref No.')
       return
     }
     setUtrError('')
@@ -158,7 +179,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
               <div>
                 <span className="font-bold">Your previous payment reference was rejected by the organizers.</span> If you have paid,
-                submit the correct 12-digit UTR below, or contact the helpline.
+                submit the correct UTR / UPI Ref No. below, or contact the helpline.
               </div>
             </div>
           ) : (
@@ -270,19 +291,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <form onSubmit={handleSubmitUtr} className="space-y-3" noValidate>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="flex-1">
-                  <label htmlFor="utr-input" className="sr-only">12-digit UTR</label>
+                  <label htmlFor="utr-input" className="sr-only">UTR / UPI Ref No.</label>
                   <input
                     id="utr-input"
                     type="text"
-                    inputMode="numeric"
                     autoComplete="off"
-                    maxLength={16}
                     value={utrNumber}
                     onChange={(e) => {
-                      setUtrNumber(e.target.value.replace(/[^\d\s]/g, ''))
+                      setUtrNumber(e.target.value)
                       if (utrError) setUtrError('')
                     }}
-                    placeholder="e.g. 412345678901"
+                    placeholder="e.g. 412345678901 or T2412AB3456"
                     className={`w-full px-4 py-3 rounded-xl bg-slate-900 border text-white text-sm font-mono tracking-wider focus:outline-none transition-colors ${
                       utrError ? 'border-red-500 focus:border-red-400' : 'border-amber-500/40 focus:border-amber-400'
                     }`}

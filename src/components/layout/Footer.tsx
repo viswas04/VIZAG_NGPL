@@ -8,6 +8,8 @@ interface FooterProps {
   onOpenLookupModal: () => void
 }
 
+const CURRENT_YEAR = new Date().getFullYear()
+
 export const Footer: React.FC<FooterProps> = ({
   onOpenPlayerModal,
   onOpenTeamModal,
@@ -144,7 +146,7 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div>
-            © {new Date().getFullYear()} {TOURNAMENT_CONFIG.title} • {TOURNAMENT_CONFIG.edition}. All rights reserved.
+            © {CURRENT_YEAR} {TOURNAMENT_CONFIG.title} • {TOURNAMENT_CONFIG.edition}. All rights reserved.
           </div>
           <div className="flex items-center gap-6">
             <span>Visakhapatnam, Andhra Pradesh</span>

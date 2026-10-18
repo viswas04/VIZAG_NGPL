@@ -45,18 +45,20 @@ export class UpiService {
   }
 
   static normalizeUtr(utr: string): string {
-    return utr.replace(/\s+/g, '')
+    return utr.trim()
   }
 
   /**
-   * UPI UTR / "UPI Ref No." is a 12-digit number shown in GPay, PhonePe, Paytm,
-   * BHIM and bank statements. It is what the admin matches against bank records.
+   * UPI UTR / "UPI Ref No." is an alphanumeric reference shown in GPay, PhonePe,
+   * Paytm, BHIM and bank statements. It may be 12 digits (standard UPI) or an
+   * alphanumeric string (NEFT/IMPS/bank-generated). The admin matches it against
+   * actual bank/UPI records.
    */
   static validateUtr(utr: string): { isValid: boolean; error?: string } {
     const v = this.normalizeUtr(utr)
     if (!v) return { isValid: false, error: 'UPI transaction reference (UTR) is required' }
-    if (!/^\d{12}$/.test(v)) {
-      return { isValid: false, error: 'Enter the 12-digit UPI Ref No. / UTR exactly as shown in your UPI app' }
+    if (!/^[a-zA-Z0-9]+$/.test(v)) {
+      return { isValid: false, error: 'UTR must contain only letters and numbers (no spaces or special characters)' }
     }
     return { isValid: true }
   }

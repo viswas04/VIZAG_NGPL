@@ -31,7 +31,7 @@
 // (and redeploying) updates QR codes, UPI links and sheet records everywhere.
 // ============================================================================
 var PAYMENT_CONFIG = {
-  UPI_ID: '79893318524@ybl',
+  UPI_ID: '7989318524-2@ybl',
   PAYEE_NAME: 'NGPL Cricket Tournament',
   TOURNAMENT_NAME: 'NGPL Tennis Ball Cricket Tournament - Season 1',
   CURRENCY: 'INR',
@@ -458,12 +458,12 @@ function registerTeam_(data) {
 function submitPayment_(body) {
   var registrationId = String(body.registrationId || '').trim().toUpperCase()
   var mobile = normalizeMobile_(body.mobile)
-  var utr = String(body.utr || '').replace(/\s+/g, '')
+  var utr = String(body.utr || '').trim()
 
   var fe = {}
   if (!registrationId) fe.registrationId = 'Registration ID is required.'
   if (!mobile) fe.mobile = 'Enter the 10-digit mobile number used during registration.'
-  if (!/^\d{12}$/.test(utr)) fe.utr = 'Enter the 12-digit UPI Ref No. / UTR exactly as shown in your UPI app.'
+  if (!utr || !/^[a-zA-Z0-9]+$/.test(utr)) fe.utr = 'Enter a valid UTR / UPI Ref No. (letters and numbers only, no spaces).'
   if (Object.keys(fe).length) throw clientError_('VALIDATION', 'Please correct the highlighted fields.', fe)
 
   return withLock_(function () {

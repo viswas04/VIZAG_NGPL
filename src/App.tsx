@@ -113,6 +113,7 @@ export function App() {
 
   const backendProblem = health !== null && health.state !== 'ready'
   const teamCapacity = health && 'health' in health ? health.health.capacity : null
+  const backendPaymentConfig = health && 'health' in health ? health.health.payment : null
 
   return (
     <div className="min-h-screen bg-[#050811] text-slate-100 flex flex-col font-sans selection:bg-amber-400 selection:text-black">
@@ -221,6 +222,7 @@ export function App() {
         isOpen={paymentModalOpen}
         receipt={activeReceipt}
         mobile={activeMobile}
+        paymentConfig={backendPaymentConfig}
         onClose={() => setPaymentModalOpen(false)}
         onPaymentSubmitted={handlePaymentSubmitted}
       />

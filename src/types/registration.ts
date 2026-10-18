@@ -157,6 +157,14 @@ export interface TeamCapacity {
   maxMatchesPerDay: number
 }
 
+export interface BackendPaymentConfig {
+  upiId: string
+  payeeName?: string
+  tournamentName?: string
+  currency?: string
+  fees: { Individual: number; Team: number }
+}
+
 /** GET ?action=health response. Never contains secrets. */
 export interface BackendHealth {
   ok: boolean
@@ -164,7 +172,8 @@ export interface BackendHealth {
   ready: boolean
   problems: string[]
   capacity: TeamCapacity | null
-  payment?: { upiId: string; fees: { Individual: number; Team: number } }
+  payment?: BackendPaymentConfig
+  spreadsheetIdSuffix?: string
 }
 
 export interface AdminData {

@@ -54,7 +54,7 @@ Follow **[SETUP_GOOGLE_SHEETS.md](SETUP_GOOGLE_SHEETS.md)** to create the spread
 Then copy `.env.example` to `.env` and set:
 - `VITE_BACKEND_URL`: the Apps Script **Web app URL** (required, since registrations are refused without it).
 
-The UPI receiver (`79893318524@ybl`) and fees live **only** in `PAYMENT_CONFIG` in `apps-script/Code.gs`.
+The UPI receiver (`7989318524-2@ybl`) and fees live **only** in `PAYMENT_CONFIG` in `apps-script/Code.gs`.
 The admin key lives **only** in Apps Script Script Properties. No secrets go in the frontend.
 
 ### 3. Run Development Server
@@ -81,7 +81,7 @@ node scripts/live-integration-test.mjs <WEB_APP_URL> [ADMIN_KEY]   # live test: 
 ## 💳 Registration & Payment Flow
 
 1. **Player Registration (₹149)** / **Team Entry (₹12,000, 11–16 players)**: the form is validated in the browser, then **re-validated on the server**, which generates the Registration ID and writes the row. The site continues only after the server confirms the save. Otherwise it shows a "not saved" error.
-2. **UPI Payment**: the server returns the payment request (receiver `79893318524@ybl`, amount, reference). The site shows the tournament name and payable amount, a QR code, and a `upi://pay?pa=…&am=…&tn=NGPL S1 <RegistrationID>` link.
+2. **UPI Payment**: the server returns the payment request (receiver `7989318524-2@ybl`, amount, reference). The site shows the tournament name and payable amount, a QR code, and a `upi://pay?pa=…&am=…&tn=NGPL S1 <RegistrationID>` link.
 3. **UTR Submission**: the payer enters the 12-digit UPI Ref No. This creates a **Payment Records** row with status **Pending Verification**. It is **never** marked paid automatically.
 4. **Status / Pay later**: footer → *Check Registration / Pay* (Registration ID + mobile).
 

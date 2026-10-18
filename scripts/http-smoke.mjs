@@ -28,7 +28,7 @@ const ind = await call('registerIndividual', {
 })
 ok(ind.json.ok, `individual registered ${ind.json.registration?.registrationId || ind.json.error}`)
 ok(ind.cors === '*' || URL_.includes('script.google'), `CORS header present (${ind.cors})`)
-ok(ind.json.registration?.payment.upiId === '79893318524@ybl', `UPI receiver = ${ind.json.registration?.payment.upiId}`)
+ok(ind.json.registration?.payment.upiId === '7989318524-2@ybl', `UPI receiver = ${ind.json.registration?.payment.upiId}`)
 ok(ind.json.registration?.payment.amount === 149, 'individual amount 149')
 
 const roster = Array.from({ length: 11 }, (_, i) => ({ name: i ? `Smoke Player ${i + 1}` : 'Smoke Captain', mobileNumber: i ? '7' + rnd().slice(0, 9) : capMob, playingRole: 'All-Rounder' }))

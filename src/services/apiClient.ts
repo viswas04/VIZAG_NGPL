@@ -5,7 +5,7 @@
  * There is deliberately NO local/offline fallback: if the backend is missing or
  * fails, the caller receives an error and must NOT tell the user it was saved.
  */
-import type { ApiResult, BackendHealth } from '../types/registration'
+import type { ApiResult, BackendHealth, BackendPaymentConfig } from '../types/registration'
 
 const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.trim() || ''
 const TIMEOUT_MS = 30000
@@ -33,6 +33,16 @@ export function newRequestId(): string {
   return `req-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`
 }
 
+let latestPaymentConfig: BackendPaymentConfig | null = null
+
+export function getLatestPaymentConfig(): BackendPaymentConfig | null {
+  return latestPaymentConfig
+}
+
+export function setLatestPaymentConfig(config: BackendPaymentConfig | null): void {
+  latestPaymentConfig = config
+}
+
 export type HealthCheck =
   | { state: 'not-configured'; problems: string[] }
   | { state: 'unreachable'; problems: string[] }
@@ -51,6 +61,9 @@ export async function checkBackendHealth(): Promise<HealthCheck> {
     if (json?.service !== 'ngpl-registration-backend') {
       return { state: 'unreachable', problems: ['VITE_BACKEND_URL does not point to the NGPL registration web app (unexpected health response).'] }
     }
+    if (json.payment) {
+      latestPaymentConfig = json.payment
+    }
     const problems = Array.isArray(json.problems) ? json.problems : []
     return json.ready ? { state: 'ready', problems, health: json } : { state: 'misconfigured', problems, health: json }
   } catch {
@@ -63,6 +76,15 @@ export async function checkBackendHealth(): Promise<HealthCheck> {
   } finally {
     clearTimeout(timer)
   }
+}
+
+export async function fetchPaymentConfig(): Promise<BackendPaymentConfig | null> {
+  if (latestPaymentConfig) return latestPaymentConfig
+  const h = await checkBackendHealth()
+  if ('health' in h && h.health?.payment) {
+    return h.health.payment
+  }
+  return null
 }
 
 export async function callBackend<T>(action: string, payload: Record<string, unknown>): Promise<ApiResult<T>> {

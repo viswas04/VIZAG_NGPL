@@ -42,7 +42,7 @@ const health = await (await fetch(`${url}?action=health`, { redirect: 'follow' }
 check(health?.service === 'ngpl-registration-backend', 'health endpoint reachable')
 check(health?.ready === true, 'backend ready', (health?.problems || []).join(' | '))
 check(health?.spreadsheetIdSuffix === EXPECTED_SHEET_SUFFIX, 'targets the expected spreadsheet', `suffix=${health?.spreadsheetIdSuffix}`)
-check(health?.payment?.upiId === '79893318524@ybl', 'UPI receiver 79893318524@ybl')
+check(health?.payment?.upiId === '7989318524-2@ybl', 'UPI receiver 7989318524-2@ybl')
 check(health?.capacity?.maxConfirmedTeams === 25 && health?.capacity?.maxMatchesPerDay === 4, 'limits 25 teams / 4 matches per day')
 if (!health?.ready) {
   console.error('\nBackend not ready; aborting before writing anything.')

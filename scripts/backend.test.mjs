@@ -6,7 +6,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createBackend } from './apps-script-harness.mjs'
 
-const UPI = '79893318524@ybl'
+const UPI = '7989318524-2@ybl'
 const ADMIN = 'test-admin-key-123456'
 
 function dobForAge(age) {
@@ -202,7 +202,7 @@ test('UTR submission guards: format, wrong mobile, double submit, reused UTR', (
   const a = b.post({ action: 'registerIndividual', data: player() }).registration
   const c = b.post({ action: 'registerIndividual', data: player({ mobileNumber: '9988776655' }) }).registration
 
-  assert.equal(b.post({ action: 'submitPayment', registrationId: a.registrationId, mobile: '9876543210', utr: 'ABC' }).code, 'VALIDATION')
+  assert.equal(b.post({ action: 'submitPayment', registrationId: a.registrationId, mobile: '9876543210', utr: 'INVALID UTR!' }).code, 'VALIDATION')
   assert.equal(b.post({ action: 'submitPayment', registrationId: a.registrationId, mobile: '9000000000', utr: '412345678901' }).code, 'NOT_FOUND')
   assert.equal(b.post({ action: 'submitPayment', registrationId: a.registrationId, mobile: '9876543210', utr: '412345678901' }).ok, true)
   // same UTR retry is idempotent
