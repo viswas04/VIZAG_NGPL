@@ -6,9 +6,39 @@
  * fails, the caller receives an error and must NOT tell the user it was saved.
  */
 import type { ApiResult, BackendHealth, BackendPaymentConfig } from '../types/registration'
+import { TOURNAMENT_CONFIG } from '../config/tournamentConfig'
 
-const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.trim() || ''
+export const LATEST_APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbxoUKTWzHAkvBzzkQIrEIBgdrPr9YMDzIWzwbTAlRCskbjlSmYB7Wlgva-62KcLRvfv_w/exec'
+
+const LEGACY_DEPLOYMENT_IDS = [
+  'AKfycby6sOYBtP5xUZ9jVwicT08ofv6A2aaKeWDtxW_-PzAII2xak27pCuFM0H3QnhDII-clCw',
+]
+
+function resolveBackendUrl(): string {
+  const envUrl = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.trim()
+  if (!envUrl) {
+    // If VITE_BACKEND_URL is not set in Netlify/hosting environment, use the authoritative latest backend URL
+    return LATEST_APPS_SCRIPT_URL
+  }
+  // Auto-upgrade legacy deployment URLs to the latest Apps Script web app
+  if (LEGACY_DEPLOYMENT_IDS.some((id) => envUrl.includes(id))) {
+    console.warn('[NGPL] Detected outdated Apps Script deployment URL in environment variables. Upgrading to latest deployment.')
+    return LATEST_APPS_SCRIPT_URL
+  }
+  return envUrl
+}
+
+const BACKEND_URL = resolveBackendUrl()
 const TIMEOUT_MS = 30000
+
+if (typeof window !== 'undefined') {
+  ;(window as unknown as { __NGPL_CONFIG__?: unknown }).__NGPL_CONFIG__ = {
+    backendUrl: BACKEND_URL ? `${BACKEND_URL.slice(0, 48)}.../exec` : 'not-configured',
+    isLatestBackend: BACKEND_URL === LATEST_APPS_SCRIPT_URL,
+    configuredUpiId: TOURNAMENT_CONFIG.payment.upiId,
+  }
+}
 
 export const isBackendConfigured = (): boolean => BACKEND_URL.length > 0
 
@@ -33,6 +63,15 @@ export function newRequestId(): string {
   return `req-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`
 }
 
+function sanitizePaymentConfig(payment?: BackendPaymentConfig | null): BackendPaymentConfig | null {
+  if (!payment) return null
+  const isStale = !payment.upiId || TOURNAMENT_CONFIG.payment.staleUpiIds.includes(payment.upiId)
+  return {
+    ...payment,
+    upiId: isStale ? TOURNAMENT_CONFIG.payment.upiId : payment.upiId,
+  }
+}
+
 let latestPaymentConfig: BackendPaymentConfig | null = null
 
 export function getLatestPaymentConfig(): BackendPaymentConfig | null {
@@ -40,7 +79,7 @@ export function getLatestPaymentConfig(): BackendPaymentConfig | null {
 }
 
 export function setLatestPaymentConfig(config: BackendPaymentConfig | null): void {
-  latestPaymentConfig = config
+  latestPaymentConfig = sanitizePaymentConfig(config)
 }
 
 export type HealthCheck =
@@ -56,14 +95,26 @@ export async function checkBackendHealth(): Promise<HealthCheck> {
   const timer = setTimeout(() => controller.abort(), 15000)
   try {
     const sep = BACKEND_URL.includes('?') ? '&' : '?'
-    const res = await fetch(`${BACKEND_URL}${sep}action=health`, { redirect: 'follow', signal: controller.signal })
+    // Cache-busting parameter and cache: 'no-store' prevent stale intermediate caching
+    const res = await fetch(`${BACKEND_URL}${sep}action=health&_t=${Date.now()}`, {
+      cache: 'no-store',
+      redirect: 'follow',
+      signal: controller.signal,
+    })
     const json = (await res.json()) as BackendHealth
     if (json?.service !== 'ngpl-registration-backend') {
       return { state: 'unreachable', problems: ['VITE_BACKEND_URL does not point to the NGPL registration web app (unexpected health response).'] }
     }
     if (json.payment) {
-      latestPaymentConfig = json.payment
+      latestPaymentConfig = sanitizePaymentConfig(json.payment)
     }
+    console.log('[NGPL API] Backend health check response:', {
+      service: json.service,
+      ready: json.ready,
+      rawBackendUpiId: json.payment?.upiId,
+      sanitizedUpiId: latestPaymentConfig?.upiId,
+      backendUrl: BACKEND_URL.slice(0, 50) + '...',
+    })
     const problems = Array.isArray(json.problems) ? json.problems : []
     return json.ready ? { state: 'ready', problems, health: json } : { state: 'misconfigured', problems, health: json }
   } catch {

@@ -85,11 +85,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Ensure displayed UPI ID, QR code, and "Pay" button all use the same latest backend configuration
   const latestConfig = paymentConfig || getLatestPaymentConfig()
+  const candidateUpiId = latestConfig?.upiId || receipt?.payment.upiId
   const targetUpiId =
-    latestConfig?.upiId ||
-    (receipt?.payment.upiId && !TOURNAMENT_CONFIG.payment.staleUpiIds.includes(receipt.payment.upiId)
-      ? receipt.payment.upiId
-      : TOURNAMENT_CONFIG.payment.upiId)
+    candidateUpiId && !TOURNAMENT_CONFIG.payment.staleUpiIds.includes(candidateUpiId)
+      ? candidateUpiId
+      : TOURNAMENT_CONFIG.payment.upiId
 
   const payment: PaymentInstructions = receipt
     ? {
@@ -102,6 +102,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     : ({} as PaymentInstructions)
 
   const paymentUri = receipt ? UpiService.buildPaymentUri(payment) : ''
+
+  useEffect(() => {
+    if (isOpen && receipt) {
+      console.log('[NGPL PaymentModal] Active Payment Configuration:', {
+        registrationId: receipt.registrationId,
+        displayedUpiId: payment.upiId,
+        paymentUri: paymentUri,
+        amount: payment.amount,
+        rawReceiptUpiId: receipt.payment?.upiId,
+        backendConfigUpiId: latestConfig?.upiId,
+      })
+    }
+  }, [isOpen, receipt, payment.upiId, paymentUri, payment.amount, latestConfig?.upiId])
 
   useEffect(() => {
     let cancelled = false

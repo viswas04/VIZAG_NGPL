@@ -194,11 +194,11 @@ export class RegistrationService {
     }
     // Reconcile receipt payment with latest authoritative backend payment configuration
     const latestConfig = getLatestPaymentConfig()
+    const candidateUpiId = latestConfig?.upiId || reg.payment.upiId
     const targetUpiId =
-      latestConfig?.upiId ||
-      (reg.payment.upiId && !TOURNAMENT_CONFIG.payment.staleUpiIds.includes(reg.payment.upiId)
-        ? reg.payment.upiId
-        : TOURNAMENT_CONFIG.payment.upiId)
+      candidateUpiId && !TOURNAMENT_CONFIG.payment.staleUpiIds.includes(candidateUpiId)
+        ? candidateUpiId
+        : TOURNAMENT_CONFIG.payment.upiId
 
     if (reg.payment) {
       reg.payment = {
